@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chat</title>
+  <style>
+    #chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100%;
+    }
+    #messages {
+        border: 1px solid black;
+        flex: 1;
+        overflow-y: scroll;
+        padding: 10px;
+    }
+    #input-container {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid black;
+    }
+    #message {
+        flex: 1;
+        height: 70px; /* Increased height for the input */
+        padding: 10px;
+        box-sizing: border-box; /* Ensure padding is included in the height */
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    #username-display {
+        padding: 10px;
+        font-weight: bold;
+    }
+.message {
+    padding: 5px; /* 줄어든 크기에 맞게 padding 조정 */
+    border-radius: 10px; /* 줄어든 크기에 맞게 border-radius 조정 */
+    margin-bottom: 10px;
+    max-width: 30%; /* 말풍선의 최대 너비를 줄입니다 */
+    position: relative;
+    line-height: 2.0;
+    border: 1px solid rgba(0, 0, 0, 0.08); /* 테두리 추가 */
+    font-size: 14px; /* 기본 폰트 크기 */
+}
+
+.message.sent {
+    background-color: #367FEE2A; /* Color for sent messages */
+    color: #000000; /* Text color for sent messages */
+    align-self: flex-end; /* 오른쪽 정렬 */
+    border-bottom-right-radius: 0; /* 아래쪽 오른쪽 모서리 직각 처리 */
+    margin-left: auto; /* 오른쪽 정렬을 위한 자동 왼쪽 여백 */
+}
+
+.message.received {
+    background-color: #ffffff; /* Color for received messages */
+    color: #000000; /* Text color for received messages */
+    align-self: flex-start; /* 왼쪽 정렬 */
+    border-bottom-left-radius: 0; /* 아래쪽 왼쪽 모서리 직각 처리 */
+}
+
+.timestamp {
+    font-size: 10px; /* 타임스탬프 폰트 크기 */
+    color: #888; /* 타임스탬프 색상 */
+    display: block; /* 타임스탬프를 블록으로 표시 */
+    text-align: right; /* 우측 정렬 */
+    margin-top: 5px; /* 메시지와의 간격 */
+}
+
+.message.sent::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+
+.message.received::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+  </style>
+  <script>
+    let socket;
+    let username;
+    // 연결
+    function connect() {
+
+    // 유효한 유저네임이 입력될 때까지 반복 요청
+    while (!username) {
+        username = prompt("채팅에 참여할 닉네임을 알려주세요:");
+        if (!username) {
+            alert("닉네임을 반드시 설정해야 합니다!");
+        }
+    }
+
+    // 상단에 ~~님이라고 띄워주기
+    document.getElementById("username-display").innerText = username + "님";
+
+    // 새 웹소켓 연결 생성
+    socket = new WebSocket("ws://localhost:8080/chat");
+
+    // 서버로부터 메시지 수신하는 함수
+    socket.onmessage = function(event) {
+        const messages = document.getElementById("messages");
+        const messageData = event.data.split(':');
+        const sender = messageData[0];
+        const message = messageData.slice(1).join(':');
+
+        // 사용자 확인하고 css 정하기
+        const messageClass = sender === username ? 'sent' : 'received';
+
+        // 메시지 html로 바꿔서 내보내기
+        messages.innerHTML += `<div class="message ${messageClass}"><b>${sender}</b>: ${message}</div>`;
+        // 스크롤 하단으로 내리기
+        messages.scrollTop = messages.scrollHeight;
+    };
+
+    // 연결 종료 시 함수 발생
+    socket.onclose = function(event) {
+        console.log("Connection closed");
+    };
+
+    // 웹소켓 연결 생성 시 호출되는 함수
+    socket.onopen = function() {
+        // 연결 새로 생기면 유저네임 서버로 보내기
+        socket.send(username);
+    };
+}
+
+    // 사용자가 입력한 메시지 가져와서 유저네임이랑 붙이고 서버에 보낸 뒤 초기화
+  function sendMessage() {
+    const messageInput = document.getElementById("message");
+    const message = username + ": " + messageInput.value;
+    const timestamp = new Date().toLocaleTimeString(); // 현재 시간 가져오기
+    const messageWithTime = `${message} <span class="timestamp">${timestamp}</span>`;
+    socket.send(messageWithTime);
+    messageInput.value = '';
+}
+
+    // 엔터키 누르면 서버에 메시지 전송
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // 엔터 누르면 페이지 새로고침되는거 막기
+            sendMessage();
+        }
+    }
+
+    // 페이지 로드되면 함수 실행
+    window.onload = function() {
+        // 웹소켓 연결하는 함수
+        connect();
+        // 키 눌릴때마다 핸들키프레스 함수 실행
+        document.getElementById("message").addEventListener("keypress", handleKeyPress);
+    };
+  </script>
+</head>
+<body>
+<div id="chat-container">
+  <div id="username-display"></div>
+  <div id="messages"></div>
+  <div id="input-container">
+    <input id="message" type="text" />
+    <button onclick="sendMessage()">전송</button>
+  </div>
+</div>
+</body>
+</html>
