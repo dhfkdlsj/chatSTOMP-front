@@ -1,109 +1,3 @@
-// import React, { useState, useEffect, useRef } from 'react';
-
-// const Chat = () => {
-//   const [socket, setSocket] = useState(null);
-//   const [username, setUsername] = useState('');
-//   const [messages, setMessages] = useState([]);
-//   const messageInputRef = useRef(null);
-//   const messagesEndRef = useRef(null);
-
-//   // 첫 번째 useEffect 실행을 제어하기 위한 플래그
-//   const hasPromptedForUsername = useRef(false);
-
-//   useEffect(() => {
-//     // 최초 실행에서만 닉네임을 물어봄
-//     if (!hasPromptedForUsername.current) {
-//       hasPromptedForUsername.current = true;  // 플래그를 설정하여 중복 실행 방지
-//       const name = prompt("채팅에 참여할 닉네임을 알려주세요:");
-//       if (name) {
-//         setUsername(name);
-//       } else {
-//         alert("닉네임을 반드시 설정해야 합니다!");
-//       }
-//     }
-//   }, []);
-
-//   useEffect(() => {
-//     if (username) {
-//       const newSocket = new WebSocket("ws://localhost:8080/chat");
-//       setSocket(newSocket);
-
-//       newSocket.onmessage = (event) => {
-//         const messageData = event.data.split(':');
-//         const sender = messageData[0];
-//         const message = messageData.slice(1).join(':');
-//         setMessages(prevMessages => [
-//           ...prevMessages,
-//           { sender, message, timestamp: new Date().toLocaleTimeString() }
-//         ]);
-//       };
-
-//       newSocket.onclose = () => {
-//         console.log("Connection closed");
-//       };
-
-//       newSocket.onopen = () => {
-//         newSocket.send(username);
-//       };
-
-//       return () => newSocket.close();
-//     }
-//   }, [username]);
-
-//   const sendMessage = () => {
-//     if (messageInputRef.current && socket) {
-//       const message = `${username}: ${messageInputRef.current.value}`;
-//       const timestamp = new Date().toLocaleTimeString();
-//       const messageWithTime = `${message} <span class="timestamp">${timestamp}</span>`;
-//       socket.send(messageWithTime);
-//       messageInputRef.current.value = '';
-//     }
-//   };
-
-//   const handleKeyPress = (event) => {
-//     if (event.key === 'Enter') {
-//       event.preventDefault();
-//       sendMessage();
-//     }
-//   };
-
-//   useEffect(() => {
-//     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-//   }, [messages]);
-
-//   return (
-//     <div id="chat-container">
-//       <div id="username-display">{username}님</div>
-//       <div id="messages">
-//         {messages.map((msg, index) => (
-//           <div
-//             key={index}
-//             className={`message ${msg.sender === username ? 'sent' : 'received'}`}
-//             dangerouslySetInnerHTML={{ __html: `<div class="message-sender"><b>${msg.sender}</b></div><div class="message-body">${msg.message}</div>` }}
-//           />
-//         ))}
-//         <div ref={messagesEndRef} />
-//       </div>
-//       <div id="input-container">
-//         <input
-//           id="message"
-//           type="text"
-//           ref={messageInputRef}
-//           onKeyPress={handleKeyPress}
-//         />
-//         <button onClick={sendMessage}>전송</button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Chat;
-
-
-
-//=============================================================
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
@@ -132,7 +26,7 @@ const Chat = () => {
 
   useEffect(() => {
     if (username) {
-      const socket = new SockJS('http://3.36.109.146:8080/chat');
+      const socket = new SockJS('/api/chat');
       const stompClient = Stomp.over(socket);
 
       stompClient.connect({}, (frame) => {
