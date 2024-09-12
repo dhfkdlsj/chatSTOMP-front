@@ -26,7 +26,7 @@ const Chat = () => {
 
   useEffect(() => {
     if (username) {
-      const socket = new SockJS('/api/chat');
+      const socket = new SockJS('http://3.36.109.146:8080/chat');
       const stompClient = Stomp.over(socket);
 
       stompClient.connect({}, (frame) => {
